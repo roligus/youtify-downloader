@@ -11,12 +11,12 @@ Requirements:
 
 How to use:
 -----------
-How to download all playlists for a profile:
-    > python main.py <username>
+How to download all playlists for a profile:  
+    `python main.py <username>`
 
-Download only a specific playlist:
-    > python main.py <username> <playlistid>
+Download only a specific playlist:  
+    `python main.py <username> <playlistid>`
 
-Example:
-    python main.py lars_ulrich
-    python main.py lars_ulrich 123456
+Example:  
+    `python main.py lars_ulrich`  
+    `python main.py lars_ulrich 123456`
