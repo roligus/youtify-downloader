@@ -13,7 +13,6 @@ import os
 import subprocess
 import math
 import time
-from youtube import YouTubeDownloader
 
 class TrackDownloader(Thread):
     def __init__(self):
@@ -78,7 +77,7 @@ class TrackDownloader(Thread):
                 #cmd = ['http://www.youtube.com/watch?v=' + track['videoId'], '-q', '-o', path]
                 try:
                     #log("downloading " + title)
-                    subprocess.call(cmd, shell=True)
+                    subprocess.call(cmd, shell=False)
                     #YouTubeDownloader(cmd, self.reporter, self.channel)
                 except:
                     #gc.collect() # easier than to track the leaks in youtube-dl :s

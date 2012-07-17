@@ -60,7 +60,7 @@ class YoutifyDownloader():
                 thread.path = path
                 thread.start()
             self.saved_tracks += 1
-            log((str(self.saved_tracks / self.total_tracks * 100.0) + '% (' + str(self.saved_tracks) + '/' + str(self.total_tracks) + ')').rjust(80))
+            log((str(float(self.saved_tracks) / float(self.total_tracks) * 100.0) + '% (' + str(self.saved_tracks) + '/' + str(self.total_tracks) + ')').rjust(80))
                     
     def get_user(self, name):
         url = u'http://www.youtify.com/api/users/' + name + u'/playlists'
@@ -86,8 +86,7 @@ class YoutifyDownloader():
         
         for playlist in playlists:
             self.save_playlist(playlist, path)
-            print str(self.saved_tracks/self.total_tracks*100.0) + '%'
-
+            log((str(float(self.saved_tracks) / float(self.total_tracks) * 100.0) + '% (' + str(self.saved_tracks) + '/' + str(self.total_tracks) + ')').rjust(80))
     def get_playlist(self, name, playlist_id):
         url = u'http://www.youtify.com/api/playlists/' + playlist_id
         request = urllib2.Request(url, None, {})
@@ -113,7 +112,8 @@ class YoutifyDownloader():
 
     def get_nbr_of_tracks(self, playlist):
         if 'videos' in playlist:
-            return len(playlist['videos'])
+            tracks = simplejson.loads(playlist['videos'])
+            return len(tracks)
         else:
             return 0
     
