@@ -45,22 +45,37 @@ class YoutifyDownloader():
 
     def save_playlist(self, playlist, dir):
         # create path [user]/[playlist]
-        title = clean_filename(playlist['title'])
-        path = os.path.join(dir, title)
+        playlist_title = clean_filename(playlist['title'])
+        path = os.path.join(dir, playlist_title)
         ensure_dir(path)
         log(path)
         
         tracks = simplejson.loads(playlist['videos'])
+        
+        # create .m3u
+        if len(tracks) > 0:
+            m3u = open(os.path.join(dir, playlist_title + '.m3u'), 'w')
+            m3u.write('#EXTM3U\n')
+
+
         for track in tracks:
             title = clean_filename(track['title'])
             track_path = os.path.join(path, title + u'.mp3')
+            m3u.write(os.path.join(playlist_title, title + u'.mp3') + '\n')
+
             if not os.path.exists(track_path):
                 thread = self.find_thread()
                 thread.track = track
                 thread.path = path
                 thread.start()
             self.saved_tracks += 1
-            log((str(float(self.saved_tracks) / float(self.total_tracks) * 100.0) + '% (' + str(self.saved_tracks) + '/' + str(self.total_tracks) + ')').rjust(80))
+            self.log_progress(self.saved_tracks, self.total_tracks)
+        m3u.close()
+
+    def log_progress(self, saved_tracks, total_tracks):
+        out = '{:10.2f}'.format(float(saved_tracks) / float(total_tracks) * 100.0)
+        out += '% (' + str(saved_tracks) + '/' + str(total_tracks) + ')'
+        log(out.rjust(80), True)
                     
     def get_user(self, name):
         url = u'http://www.youtify.com/api/users/' + name + u'/playlists'
@@ -86,7 +101,7 @@ class YoutifyDownloader():
         
         for playlist in playlists:
             self.save_playlist(playlist, path)
-            log((str(float(self.saved_tracks) / float(self.total_tracks) * 100.0) + '% (' + str(self.saved_tracks) + '/' + str(self.total_tracks) + ')').rjust(80))
+            self.log_progress(self.saved_tracks, self.total_tracks)
     def get_playlist(self, name, playlist_id):
         url = u'http://www.youtify.com/api/playlists/' + playlist_id
         request = urllib2.Request(url, None, {})

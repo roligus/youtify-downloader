@@ -49,7 +49,16 @@ class TrackDownloader(Thread):
 
     def convert_to_mp3(self, path, title):
         out_path = path + '.mp3'
-        cmd = ['ffmpeg', '-y', '-i', '\"' + path + '\"', '-vn', '-acodec', 'libmp3lame', '-v', 'warning', '\"' + out_path + '\"']
+        meta = getMetaData(title)
+        cmd = ['ffmpeg', 
+            '-y', '-vn',
+            '-shortest',
+            '-i', '\"' + path + '\"', 
+            '-acodec', 'libmp3lame', '-aq', '2',
+            '-metadata title="' + meta['title'] + '"',
+            '-metadata artist="' + meta['artist'] + '"',
+            '-v', 'error', 
+            '\"' + out_path + '\"']
         #log("converting " + title)
         try:
             #subprocess.call(cmd)
@@ -70,31 +79,39 @@ class TrackDownloader(Thread):
         if os.path.exists(path):
             return
         
-        if track['videoId'] is not None:
-            if 'type' not in track or track['type'] == 'youtube':
-                path = os.path.join(dir, title)
-                cmd = ['python', 'youtube-dl.py', 'http://www.youtube.com/watch?v=' + track['videoId'], '-q', '-o', path]
-                #cmd = ['http://www.youtube.com/watch?v=' + track['videoId'], '-q', '-o', path]
-                try:
-                    #log("downloading " + title)
-                    subprocess.call(cmd, shell=False)
-                    #YouTubeDownloader(cmd, self.reporter, self.channel)
-                except:
-                    #gc.collect() # easier than to track the leaks in youtube-dl :s
-                    log(title + " failed to download (YouTubeDownloader)")
-                    time.sleep(1)
-                
-                if os.path.exists(path):
-                    self.convert_to_mp3(path, title)
-                else:
-                    log(title + " failed (does not exist)")
-                    time.sleep(1)
-            elif 'type' in track and track['type'] == 'soundcloud':
-                url = 'https://api.soundcloud.com/tracks/' + str(track['videoId']) + '/stream?client_id=' + SOUNDCLOUD_API_KEY
-                self.download(url, title, path)
-            elif 'type' in track and track['type'] == 'officialfm':
-                url = 'http://cdn.official.fm/mp3s/' + str(int(math.floor(track['videoId'] / 1000))) + '/' + str(track['videoId']) + '.mp3'
-                self.download(url, title, path)
+        if track['videoId'] is None:
+            return
+        
+        if 'type' not in track or track['type'] == 'youtube':
+            path = os.path.join(dir, title)
+            cmd = ['python', 'youtube-dl', 'http://www.youtube.com/watch?v=' + track['videoId'], '-q', '-o', path]
+            #cmd = ['http://www.youtube.com/watch?v=' + track['videoId'], '-q', '-o', path]
+            try:
+                #log("downloading " + title)
+                subprocess.call(cmd, shell=False)
+                #YouTubeDownloader(cmd, self.reporter, self.channel)
+            except:
+                #gc.collect() # easier than to track the leaks in youtube-dl :s
+                log(title + " failed to download (YouTubeDownloader)")
+                time.sleep(1)
+            
+            if os.path.exists(path):
+                self.convert_to_mp3(path, title)
+            else:
+                log(path + " failed (does not exist)")
+                time.sleep(1)
+        elif 'type' in track and track['type'] == 'soundcloud':
+            url = 'https://api.soundcloud.com/tracks/' + str(track['videoId']) + '/stream?client_id=' + SOUNDCLOUD_API_KEY
+            self.download(url, title, path)
+        elif 'type' in track and track['type'] == 'officialfm':
+            id = 0
+            try:
+                id = int(track['videoId'])
+            except:
+                log(title + " doesn't have a soundcloud id. " + str(track['videoId']) + " is not an integer.")
+                return
+            url = 'http://cdn.official.fm/mp3s/' + str(int(math.floor(id / 1000))) + '/' + str(id) + '.mp3'
+            self.download(url, title, path)
     
     def run(self):
         if self.track is None or self.path is None:
